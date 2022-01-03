@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -12,12 +13,21 @@ import (
 var capacity int = 0
 var status string = ""
 var diffs []int
+var logFilePath = "/tmp/batMileageStatus.log"
 
 func main() {
+	f, err := os.OpenFile(logFilePath,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+
+	logger := log.New(f, "prefix", log.LstdFlags)
 	capacity, status = readBatStatus()
 	for 1 > 0 {
 		curCap, curStatus := readBatStatus()
-		obsTime := time.Now().Format("2006-01-02 15:04:05")
+		obsTime := time.Now().Format("2006-01-02 15:04")
 		if strings.Contains(curStatus, "Discharging") {
 			diff := capacity - curCap
 			if len(diffs) == 12 {
@@ -26,15 +36,15 @@ func main() {
 			if diff > 0 {
 				diffs = append(diffs, diff)
 				avg := calcAvg()
-				fmt.Printf("time %v currentCapacity %v discharged %v avg %v \n", obsTime, curCap, diff, avg)
+				logger.Printf("time %v currentCapacity %v discharged %v avg %v \n", obsTime, curCap, diff, avg)
 				saveAvg(avg)
 			} else {
-				fmt.Printf("skipping calc \n")
+				logger.Printf("skipping calc \n start status \n time %v charge %v \n", obsTime, curCap)
 			}
 			capacity = curCap
 			status = curStatus
 		} else if strings.Contains(curStatus, "Charging") {
-			fmt.Printf("status charging at %v \n", obsTime)
+			logger.Printf("status charging \n %v - %v \n", obsTime, curStatus)
 		}
 		time.Sleep(5 * time.Minute)
 	}
