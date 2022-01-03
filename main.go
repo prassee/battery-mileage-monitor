@@ -14,6 +14,7 @@ var capacity int = 0
 var status string = ""
 var diffs []int
 var logFilePath = "/tmp/batMileageStatus.log"
+var logger *log.Logger
 
 func main() {
 	f, err := os.OpenFile(logFilePath,
@@ -23,7 +24,7 @@ func main() {
 	}
 	defer f.Close()
 
-	logger := log.New(f, "prefix", log.LstdFlags)
+	logger = log.New(f, "[BAT Discharge Mileage] ", log.LstdFlags)
 	capacity, status = readBatStatus()
 	for 1 > 0 {
 		curCap, curStatus := readBatStatus()
@@ -52,8 +53,14 @@ func main() {
 
 func readBatStatus() (int, string) {
 	basePath := "/sys/class/power_supply/BAT0/"
-	capacity, _ := ioutil.ReadFile(basePath + "/capacity")
-	capParsed, _ := strconv.ParseInt(strings.TrimSpace(string(capacity)), 10, 64)
+	capacity, capFileMissing := ioutil.ReadFile(basePath + "/capacity")
+	if capFileMissing != nil {
+		logger.Printf("BAT Capacity file missing %v \n", capFileMissing.Error())
+	}
+	capParsed, statFileMissing := strconv.ParseInt(strings.TrimSpace(string(capacity)), 10, 64)
+	if statFileMissing != nil {
+		logger.Printf("BAT status file missing %v \n", statFileMissing.Error())
+	}
 	cap := int(capParsed)
 	status, _ := ioutil.ReadFile(basePath + "/status")
 	statusStr := string(status)
