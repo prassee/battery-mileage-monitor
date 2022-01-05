@@ -28,6 +28,7 @@ I'm using i3wm and wanted to plot this as part of my i3status. BMM writes the st
     separator=true
 
 #### TODO
+- Implement TEST
 - restart process around `sleep` & `charging` mode
 - detect if charge  suddenly drops
 - TOML driven config

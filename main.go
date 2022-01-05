@@ -1,3 +1,9 @@
+/*
+   BMM - Battery Mileage Monitor
+   =============================
+   Measures discharge rate by quering `/sys/class/power_supply/BAT0/capacity` file
+   for every 5 mins. Record `capacity` and calc the average of consequent diffs (for now hc'ed 12). The average is then flushed to file.
+*/
 package main
 
 import (
