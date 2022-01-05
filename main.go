@@ -40,7 +40,7 @@ func main() {
 			if len(diffs) == 12 {
 				diffs = diffs[1:]
 			}
-			if diff > 0 {
+			if diff > 0 { // FIXME - convert this to a FSM for better accuracy
 				diffs = append(diffs, diff)
 				avg := calcAvg()
 				logger.Printf("time %v currentCapacity %v discharged %v avg %v \n", obsTime, curCap, diff, avg)
