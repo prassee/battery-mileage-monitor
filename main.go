@@ -1,8 +1,9 @@
 /*
    BMM - Battery Mileage Monitor
-   =============================
+   ==============================
    Measures discharge rate by quering `/sys/class/power_supply/BAT0/capacity` file
-   for every 5 mins. Record `capacity` and calc the average of consequent diffs (for now hc'ed 12). The average is then flushed to file.
+   for every 5 mins. Record `capacity` and calc the average of consequent diffs (for now hc'ed 12).
+   The average is then flushed to file.
 */
 package main
 
@@ -51,7 +52,9 @@ func main() {
 			capacity = curCap
 			status = curStatus
 		} else if strings.Contains(curStatus, "Charging") {
-			logger.Printf("status charging \n %v - %v \n", obsTime, curStatus)
+			logger.Printf("status charging \n %v - %v started at %v \n", obsTime, curStatus, curCap)
+			//set to until it starts discharging
+			saveAvg(0.0)
 		}
 		time.Sleep(5 * time.Minute)
 	}
@@ -78,7 +81,8 @@ func calcAvg() (avg float64) {
 	for i := range diffs {
 		sum += float64(diffs[i])
 	}
-	return sum / float64(len(diffs))
+	avg = sum / float64(len(diffs))
+	return avg
 }
 
 func saveAvg(avg float64) {
