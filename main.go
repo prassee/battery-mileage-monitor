@@ -21,20 +21,25 @@ var capacity int = 0
 var status string = ""
 var diffs []int
 var logFilePath = "/tmp/batMileageStatus.log"
+var bmmPath = "/data/sysConfigs/batDrainAvg.txt"
+var freq = 1 * time.Minute
 var logger *log.Logger
 
-func main() {
-	f, err := os.OpenFile(logFilePath,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+func initLogger() *os.File {
+	f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println(err)
 	}
-	defer f.Close()
-
 	logger = log.New(f, "[BAT Discharge Mileage] ", log.LstdFlags)
-	capacity, status = readBatStatus()
+	return f
+}
+
+func main() {
+	loggerFile := initLogger()
+	defer loggerFile.Close()
+	capacity, status = getBatteryStatus()
 	for 1 > 0 {
-		curCap, curStatus := readBatStatus()
+		curCap, curStatus := getBatteryStatus()
 		obsTime := time.Now().Format("2006-01-02 15:04")
 		if strings.Contains(curStatus, "Discharging") {
 			diff := capacity - curCap
@@ -56,11 +61,11 @@ func main() {
 			//set to until it starts discharging
 			saveAvg(0.0)
 		}
-		time.Sleep(5 * time.Minute)
+		time.Sleep(freq)
 	}
 }
 
-func readBatStatus() (int, string) {
+func getBatteryStatus() (int, string) {
 	basePath := "/sys/class/power_supply/BAT0/"
 	capacity, capFileMissing := ioutil.ReadFile(basePath + "/capacity")
 	if capFileMissing != nil {
@@ -86,5 +91,5 @@ func calcAvg() (avg float64) {
 }
 
 func saveAvg(avg float64) {
-	ioutil.WriteFile("/data/sysConfigs/batDrainAvg.txt", []byte(fmt.Sprintf("%v", avg)), os.FileMode(0644))
+	ioutil.WriteFile(bmmPath, []byte(fmt.Sprintf("%v", avg)), os.FileMode(0644))
 }

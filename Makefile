@@ -10,4 +10,3 @@ deploy:
 	mv bin/battery-measure /data/cellar/
 
 build_and_deploy: clean build deploy
-
