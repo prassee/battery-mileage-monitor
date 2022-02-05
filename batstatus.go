@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-
 func getBatteryStatus() (int, string) {
 	basePath := "/sys/class/power_supply/BAT0/"
 	capacity, capFileMissing := ioutil.ReadFile(basePath + "/capacity")
