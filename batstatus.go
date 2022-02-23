@@ -14,9 +14,9 @@ func getBatteryStatus() (int, string) {
 	if capFileMissing != nil {
 		logger.Printf("BAT Capacity file missing %v \n", capFileMissing.Error())
 	}
-	capParsed, statFileMissing := strconv.ParseInt(strings.TrimSpace(string(capacity)), 10, 64)
-	if statFileMissing != nil {
-		logger.Printf("BAT status file missing %v \n", statFileMissing.Error())
+	capParsed, statParserError := strconv.ParseInt(strings.TrimSpace(string(capacity)), 10, 64)
+	if statParserError != nil {
+		logger.Printf("BAT status cannot be parsed %v \n", statParserError.Error())
 	}
 	cap := int(capParsed)
 	status, _ := ioutil.ReadFile(basePath + "/status")
@@ -24,6 +24,8 @@ func getBatteryStatus() (int, string) {
 	return cap, statusStr
 }
 
+
+// Function `calcAvg` - calculates the average discharge rate 
 func calcAvg() (avg float64) {
 	sum := 0.0
 	for i := range diffs {

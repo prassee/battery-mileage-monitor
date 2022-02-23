@@ -8,9 +8,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
+
+	// "strings"
 	"time"
 )
 
@@ -19,7 +23,7 @@ var status string = ""
 var diffs []int
 var logFilePath = "/tmp/batMileageStatus.log"
 var bmmPath = "/data/sysConfigs/batDrainAvg.txt"
-var freq = 1 * time.Minute
+var freq = 5 * time.Minute
 var logger *log.Logger
 
 func initLogger() *os.File {
@@ -40,10 +44,10 @@ func main() {
 		obsTime := time.Now().Format("2006-01-02 15:04")
 		if strings.Contains(curStatus, "Discharging") {
 			diff := capacity - curCap
-			if len(diffs) == 12 {
-				diffs = diffs[1:]
-			}
 			if diff > 0 { // FIXME - convert this to a FSM for better accuracy
+				if len(diffs) == 12 {
+					diffs = diffs[1:]
+				}
 				diffs = append(diffs, diff)
 				avg := calcAvg()
 				logger.Printf("time %v currentCapacity %v discharged %v avg %v \n", obsTime, curCap, diff, avg)
@@ -56,8 +60,18 @@ func main() {
 		} else if strings.Contains(curStatus, "Charging") {
 			logger.Printf("status charging \n %v - %v started at %v \n", obsTime, curStatus, curCap)
 			//set to until it starts discharging
+			if curCap >= 75 {
+				notifyMaxCharge(curCap)
+			}
 			saveAvg(0.0)
 		}
 		time.Sleep(freq)
+	}
+}
+
+func notifyMaxCharge(curCap int) {
+	_,err := exec.Command("dunstify", fmt.Sprintf("Bat charged upto %v.\n Discharge now\n", curCap)).Output()
+	if err != nil {
+		fmt.Printf("cannot call dunstify")
 	}
 }
